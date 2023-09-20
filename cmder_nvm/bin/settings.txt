@@ -1,4 +1,0 @@
-root: C:\cmder_nvm\bin\nodejs
-path: C:\cmder_nvm\bin\nodejs
-arch: 64 
-proxy: none
