@@ -1,0 +1,100 @@
+3d84 start_logger              160 ---- 2023/09/20 14:51:15.941 -------------------------------------------------
+3d84 start_logger              166 Host process is 'cmd.exe' (pid 15748)
+3d84 start_logger              170 DLL path is 'C:\Users\Uczen\Downloads\cmder_nvm_v2.0\vendor\clink'
+3d84 start_logger              185 Windows version 10.0.19045 (x64)
+3d84 start_logger              187 Clink version 1.5.1.1e9e51 (x64)
+3d84 hook_setter::hook_setter  159 >>> Started hook transaction.
+3d84 hook_setter::attach_iat   316 Attempting to hook SetEnvironmentVariableW in IAT for module 00007FF60E540000.
+3d84 pe_info::iterate_imports  195 Found import in 'api-ms-win-core-processenvironment-l1-1-0.dll'
+3d84 find_iat                  124 Found import at 00007FF60E573860 (value is 00007FFBAC763060).
+3d84 hook_setter::attach_iat   316 Attempting to hook WriteConsoleW in IAT for module 00007FF60E540000.
+3d84 pe_info::iterate_imports  195 Found import in 'api-ms-win-core-console-l1-1-0.dll'
+3d84 find_iat                  124 Found import at 00007FF60E5734F8 (value is 00007FFBAC7076D0).
+3d84 hook_setter::attach_iat   316 Attempting to hook GetEnvironmentVariableW in IAT for module 00007FF60E540000.
+3d84 pe_info::iterate_imports  195 Found import in 'api-ms-win-core-processenvironment-l1-1-0.dll'
+3d84 find_iat                  124 Found import at 00007FF60E573880 (value is 00007FFBAC725430).
+3d84 hook_setter::commit       207 <<< Hook transaction committed.
+3d84 hook_setter::hook_setter  159 >>> Started hook transaction.
+3d84 hook_setter::detach_iat   359 Attempting to unhook 00007FFB3D2EB0F0 from GetEnvironmentVariableW in IAT for module 00007FF60E540000.
+3d84 pe_info::iterate_imports  195 Found import in 'api-ms-win-core-processenvironment-l1-1-0.dll'
+3d84 find_iat                  124 Found import at 00007FF60E573880 (value is 00007FFB3D2EB0F0).
+3d84 hook_setter::commit       207 <<< Hook transaction committed.
+3d84 hook_setter::hook_setter  159 >>> Started hook transaction.
+3d84 hook_setter::attach_iat   316 Attempting to hook ReadConsoleW in IAT for module 00007FF60E540000.
+3d84 pe_info::iterate_imports  195 Found import in 'api-ms-win-core-console-l1-1-0.dll'
+3d84 find_iat                  124 Found import at 00007FF60E5734E0 (value is 00007FFBAC810B30).
+3d84 hook_setter::commit       207 <<< Hook transaction committed.
+3d84 hook_setter::hook_setter  159 >>> Started hook transaction.
+3d84 hook_setter::attach_iat   316 Attempting to hook SetConsoleTitleW in IAT for module 00007FF60E540000.
+3d84 pe_info::iterate_imports  195 Found import in 'api-ms-win-core-console-l2-2-0.dll'
+3d84 find_iat                  124 Found import at 00007FF60E573558 (value is 00007FFBAC7769D0).
+3d84 hook_setter::commit       207 <<< Hook transaction committed.
+3d84 win_screen_buffer::begin  297 Using native terminal support (auto mode found 'ConEmuHk64.dll').
+3d84 host_lua::load_scripts    158 Loaded 2 Lua scripts in 28 ms
+3d84 ={update.lua}               0 Clink updater: updating because there is no record of having updated before.
+3d84 history_db::initialise   1264 master bank ctag: |CTAG_1695045686_358188687_10416_0
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 ={update.lua}               0 Clink updater: latest release is v1.5.5; install type is zip.
+3d84 ={update.lua}               0 Clink updater: downloading https://github.com/chrisant996/clink/releases/download/v1.5.5/clink.1.5.5.d4594d.zip to C:\Users\Uczen\AppData\Local\Temp\clink\updater\v1.5.5.zip.
+3d84 ={update.lua}               0 Clink updater: update in C:\Users\Uczen\AppData\Local\Temp\clink\updater\v1.5.5.zip is ready to be applied.
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 check_auto_answer         123 Auto-answer; 'Terminate batch job (Y/N)? ' (NY)
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 reset_handle              144 resetting mismatched stdout handle
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 reset_handle              144 resetting mismatched stdout handle
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 reset_handle              144 resetting mismatched stdout handle
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 reset_handle              144 resetting mismatched stdout handle
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted
+3d84 history_db::compact      1526 History:  0 active, 0 deleted

@@ -1,0 +1,51 @@
+cd bin
+|nstall
+|nstall
+|nstall
+|nstall
+|nstall
+|nstall
+|nstall
+|nstall
+|nstall
+|nstall
+|nstall
+|nstall
+nvm use 18.12.1
+use/node_18
+ls
+|ir
+|se\node_18
+dir
+|se\node_18
+|se\node_18
+|se\node_18
+echo ..\%CD%\nodejs\%NODEVER%\nodevars.cmd
+echo %CD%\nodejs\%NODEVER%\nodevars.cmd
+|se\node_18
+C:\Users\Uczen\Downloads\cmder_nvm_v2.0\bin\nodejs\v18.12.1\nodevars.cm
+|:\Users\Uczen\Downloads\cmder_nvm_v2.0\bin\nodejs\v18.12.1\nodevars.cmd
+C:\Users\Uczen\Downloads\cmder_nvm_v2.0\bin\nodejs\v18.12.1\nodevars.cmd
+|se\node_18
+|se\node_18
+|cho Enabled: node, npm
+echo Enabled: node, npm
+|se\node_18
+|se\node_18
+|se\node_18
+|se\node_18
+|se\node_18
+|se\node_18
+|se\node_18
+|ode
+use\node_18
+|se\node_16
+|nstall
+install
+|nstall\node_16
+|nstall\node_16
+use/node_16
+|se\node_16
+node
+install\node_16
+use\node_16
