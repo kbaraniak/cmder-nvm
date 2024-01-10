@@ -38,8 +38,10 @@
 ## Licenses :page_with_curl:
 Project based on:
 - nvm [nvm-sh/nvm](https://github.com/nvm-sh/nvm/) [License: MIT]
+- nvm-windows [coreybutler/nvm-windows](https://github.com/coreybutler/nvm-windows) [License: MIT]
 - cmder [cmderdev/cmder](https://github.com/cmderdev/cmder) [License: MIT]
 
 **Thank you for usage my project**
+Pull Requests are welcome
 
 Created with :hearts: for coding
