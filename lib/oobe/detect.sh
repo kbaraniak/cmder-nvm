@@ -132,11 +132,25 @@ oobe_distro() {
 oobe_pkg_manager() {
     _pm=$(oobe_distro)
 
+    # The rhel branch is spelled out rather than written as
+    # `oobe_have dnf && printf dnf || oobe_have yum && ...`: chained
+    # `&&`/`||` binds left to right, so that form falls through to the yum
+    # test even when dnf already answered, printing both names. RHEL 8 and 9
+    # ship dnf and yum together, so that is the common case, not the exotic
+    # one. It also printed "dnf" followed by "none" on a dnf-only system,
+    # because the `||` bound to the second test instead of the first.
     case "$_pm" in
         debian|ubuntu) oobe_have apt-get && printf 'apt-get\n' || printf 'none\n' ;;
         fedora)        oobe_have dnf     && printf 'dnf\n'     || printf 'none\n' ;;
-        rhel)          oobe_have dnf     && printf 'dnf\n'
-                      oobe_have yum     && printf 'yum\n'     || printf 'none\n' ;;
+        rhel)
+            if oobe_have dnf; then
+                printf 'dnf\n'
+            elif oobe_have yum; then
+                printf 'yum\n'
+            else
+                printf 'none\n'
+            fi
+            ;;
         arch)          oobe_have pacman  && printf 'pacman\n'  || printf 'none\n' ;;
         suse)          oobe_have zypper  && printf 'zypper\n'  || printf 'none\n' ;;
         alpine)        oobe_have apk     && printf 'apk\n'     || printf 'none\n' ;;
