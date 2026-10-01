@@ -3,4 +3,5 @@
 set NODE_VER=v16.20.2
 
 nvm install %NODE_VER%
+echo Install complete
 echo Change to this version, using: use\node %NODE_VER%
