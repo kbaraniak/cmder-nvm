@@ -40,7 +40,7 @@ REM ---------------------------------------------------------------------------
 REM  :version - print the cmder-nvm version recorded in the VERSION file
 REM ---------------------------------------------------------------------------
 :version
-set "MF_VERSION_FILE=%~dp0..\..\VERSION"
+set "MF_VERSION_FILE=%~dp0..\VERSION"
 if not exist "%MF_VERSION_FILE%" goto :version_missing
 set "MF_VERSION="
 for /f "usebackq tokens=* delims=" %%v in ("%MF_VERSION_FILE%") do (
@@ -197,7 +197,7 @@ REM ---------------------------------------------------------------------------
 :read
 set "MF_VALUE="
 set "MF_KEY=%~1"
-set "MF_MANIFEST=%~dp0..\..\manifest.json"
+set "MF_MANIFEST=%~dp0..\manifest.json"
 if not exist "%MF_MANIFEST%" exit /b 1
 
 for /f "usebackq tokens=* delims=" %%l in ("%MF_MANIFEST%") do call :match_line "%%l"

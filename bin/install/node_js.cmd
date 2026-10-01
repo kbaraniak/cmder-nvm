@@ -21,8 +21,9 @@ if "%NODE_VER%"=="" (
 )
 
 REM nvm-windows reads settings.txt from its own directory, so point it there
-REM rather than at the version store.
-set "NVM_EXE=%~dp0nvm.exe"
+REM rather than at the version store. nvm.exe sits in bin\, one level up from
+REM this script, not beside it.
+set "NVM_EXE=%~dp0..\nvm.exe"
 if not exist "%NVM_EXE%" (
     echo [ERROR] nvm.exe not found at "%NVM_EXE%".
     echo         This distribution is incomplete; re-download the release zip.

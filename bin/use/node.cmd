@@ -22,7 +22,7 @@ if "%NODEVER%"=="" (
 REM Resolve paths from the script location, not from the current directory.
 REM NVM_HOME holds the installed versions; settings.txt lives next to nvm.exe.
 set "NVM_HOME=%~dp0..\..\nodejs"
-set "NVM_EXE=%~dp0nvm.exe"
+set "NVM_EXE=%~dp0..\nvm.exe"
 
 if not exist "%NVM_EXE%" (
     echo [ERROR] nvm.exe not found at "%NVM_EXE%".

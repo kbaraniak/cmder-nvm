@@ -12,6 +12,7 @@ manifest that no longer matches the binaries.
 """
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -370,6 +371,48 @@ def check_line_endings(root):
         )
 
 
+def check_script_relative_paths(root):
+    r"""
+    Every %~dp0-derived path must resolve to something real, inside the tree.
+
+    %~dp0 is expanded by cmd.exe, never by us, so a static suite cannot catch
+    a wrong relative path by reading the file. That is how three of them got
+    committed: bin\use\node.cmd and bin\install\node_js.cmd both looked for
+    nvm.exe beside themselves when it lives one level up, and
+    lib\manifest.cmd reached two levels up for VERSION and manifest.json,
+    escaping the repository entirely. Every one of those fails at runtime only,
+    and all three break the two entry points that matter most.
+
+    So the path is resolved here the way cmd.exe would, against the script's
+    real location in the tree, and then required to exist. A path that climbs
+    above the root is reported separately, because it is a bug even when some
+    other checkout happens to have the file at the wrong place.
+
+    Paths created at install time are allowlisted: nodejs\ is populated by
+    `nvm install`, not by the repository.
+    """
+    generated = {"nodejs"}
+
+    for path in iter_batch_files(root):
+        rel = path.relative_to(root)
+        base = rel.parent
+        for lineno, line in enumerate(path.read_text(errors="replace").splitlines(), 1):
+            for match in re.finditer(r'set\s+"?[A-Za-z_][\w]*=%~dp0([^"\s]*)"?', line):
+                suffix = match.group(1).replace("\\", "/")
+                resolved = os.path.normpath(str(base / suffix) if suffix else str(base))
+                where = f"{rel}:{lineno} -> {resolved}"
+
+                check(
+                    resolved != ".." and not resolved.startswith(".." + os.sep),
+                    f"script-relative path escapes the tree: {where}",
+                )
+                target = root / resolved
+                check(
+                    resolved in generated or target.exists(),
+                    f"script-relative path does not exist: {where}",
+                )
+
+
 def main():
     root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
 
@@ -381,6 +424,7 @@ def main():
     check_stale_references(root)
     check_version_consistency(root)
     check_line_endings(root)
+    check_script_relative_paths(root)
 
     print(f"static checks: {CHECKS} run, {len(FAILURES)} failed")
     for failure in FAILURES:
