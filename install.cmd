@@ -26,12 +26,14 @@ REM Wyświetl menu wyboru wersji Node.js
 echo PATH: Installed Complete
 echo NodeJS: Select node version to install in 5 sec:
 echo ^- 1. NodeJS v16
-echo ^- 2. NodeJS v18 (default)
+echo ^- 2. NodeJS v18 (LTS)
 echo ^- 3. NodeJS v19
 echo ^- 4. NodeJS v20 (LTS)
-echo ^- 5. NodeJS v21 (latest)
+echo ^- 5. NodeJS v21
+echo ^- 6. NodeJS latest LTS
+echo ^- 7. NodeJS latest
 echo ^- 0. Exit
-choice /T 5 /N /C:123450 /M "Option >" /D 2
+choice /T 5 /N /C:123450 /M "Option >" /D 7
 
 REM Sprawdź, którą wersję Node.js użytkownik chce zainstalować
 if %ERRORLEVEL% == 1 (goto n16)
@@ -39,7 +41,9 @@ if %ERRORLEVEL% == 2 (goto n18)
 if %ERRORLEVEL% == 3 (goto n19)
 if %ERRORLEVEL% == 4 (goto n20)
 if %ERRORLEVEL% == 5 (goto n21)
-if %ERRORLEVEL% == 6 (goto stop)
+if %ERRORLEVEL% == 6 (goto n_lts)
+if %ERRORLEVEL% == 7 (goto n_latest)
+if %ERRORLEVEL% == 8 (goto stop)
 
 REM Install NodeJS scripts
 :n16
@@ -72,9 +76,18 @@ start /wait /b cmd /c bin\install\node_js v21.5.0
 start /wait /b cmd /c bin\use\node v21.5.0
 exit /b
 
+:n_lts
+echo NodeJS: Installing NodeJS LTS. Please Wait...
+start /wait /b cmd /c bin\install\node\latest-lts
+start /wait /b cmd /c bin\use\node lts
+exit /b
+
+:n_latest
+echo NodeJS: Installing NodeJS latest. Please Wait...
+start /wait /b cmd /c bin\install\node\latest
+start /wait /b cmd /c bin\use\node latest
+exit /b
+
 :stop
 echo Thank you for use
 echo NodeJS: You can install, other version later, using install/node/version
-
-
-
