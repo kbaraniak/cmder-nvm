@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "_comment": "Pinned artifacts for this distribution. Flat dotted keys, one value per line: lib/manifest.cmd parses this file with findstr, so values must not contain spaces. The cmder-nvm version is deliberately absent; it lives in the VERSION file at the repo root.",
+  "cmder.version": "1.3.24.236",
+  "cmder.file": "Cmder.exe",
+  "cmder.sha256": "72ebf2ef37dbcc40780453f0d6884224062483d204bc0d9fa68405176d5950b8",
+  "nvm-windows.version": "1.1.10",
+  "nvm-windows.file": "bin/nvm.exe",
+  "nvm-windows.sha256": "6eef8b67aeefcb060c98b1e4925e5b23e6097546b73f564c5839f8dcb2dfbc3b",
+  "nvm-windows.node-mirror": "https://nodejs.org/dist"
+}
