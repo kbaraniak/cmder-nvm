@@ -1,7 +1,7 @@
-@REM Install Script Node.js v16
+@REM ==========================================================================
+@REM  Install Node.js 16.
+@REM
+@REM  Pinned on purpose so the menu always offers the same tested version.
+@REM ==========================================================================
 @echo off
-set NODE_VER=v16.20.2
-
-call nvm install %NODE_VER%
-echo Install complete
-echo Change to this version, using: use\node %NODE_VER%
+call "%~dp0..\node_js.cmd" v16.20.2

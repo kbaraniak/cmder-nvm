@@ -1,7 +1,5 @@
-@REM Install Script latest Node.js LTS
+@REM ==========================================================================
+@REM  Install the latest Node.js LTS release.
+@REM ==========================================================================
 @echo off
-set NODE_VER=lts
-
-call nvm install --lts
-echo Install complete
-echo Change to this version, using: use\node %NODE_VER%
+call "%~dp0..\node_js.cmd" lts
