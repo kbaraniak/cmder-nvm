@@ -15,3 +15,6 @@ node/
 *.swp
 .DS_Store
 Thumbs.db
+
+# --- Release artifacts (see pack.cmd) -----------------------------------
+cmder-nvm.zip
