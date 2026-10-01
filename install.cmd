@@ -2,9 +2,21 @@
 REM ===========================================================================
 REM  cmder-nvm bootstrap installer (Windows / Cmder)
 REM
-REM  Creates the portable nvm environment inside this distribution and then
-REM  offers to install a Node.js version. The repository root is resolved from
-REM  the script location so the installer works from any working directory.
+REM  Prepares the portable nvm environment inside this distribution and then
+REM  installs a Node.js version. It does NOT download anything: bin\nvm.exe
+REM  ships with the distribution and is verified against manifest.json, so the
+REM  bootstrap is deterministic and works with no network.
+REM
+REM  Usage:
+REM    install.cmd                     interactive version menu
+REM    install.cmd --node 22           install a specific version
+REM    install.cmd --node lts          install the latest LTS
+REM    install.cmd --node lts --yes    same, without prompting (CI, provisioning)
+REM    install.cmd --no-activate       install only, do not switch to it
+REM
+REM  Installing and activating are separate steps. Use bin\use\node.cmd to
+REM  switch, or pass --no-activate here. The nvm-windows commands (nvm list,
+REM  nvm install, nvm use) keep working exactly as before.
 REM ===========================================================================
 setlocal EnableExtensions
 
@@ -12,300 +24,217 @@ REM --- Environment layout ---------------------------------------------------
 REM NVM_PATH    : root of this distribution
 REM NVM_HOME    : where nvm-windows keeps the installed Node.js versions
 REM NVM_SYMLINK : where nvm-windows points the "active" version
+REM
+REM nvm-windows reads settings.txt from its own directory, so it is written to
+REM bin\ next to nvm.exe, not to NVM_HOME. NVM_HOME holds the version store.
 set "NVM_PATH=%~dp0"
 if "%NVM_PATH:~-1%"=="\" set "NVM_PATH=%NVM_PATH:~0,-1%"
 set "NVM_HOME=%NVM_PATH%\nodejs"
 set "NVM_SYMLINK=%NVM_PATH%\node"
-set "NVM_SETTINGS=%NVM_HOME%\settings.txt"
+set "NVM_EXE=%NVM_PATH%\bin\nvm.exe"
+set "NVM_SETTINGS=%NVM_PATH%\bin\settings.txt"
 
-echo Bootstrap Installer (cmder-nvm v2.1)
+set "NODE_TARGET="
+set "ACTIVATE=1"
+
+:parse_args
+if "%~1"=="" goto :args_done
+if /i "%~1"=="--node" (
+    if "%~2"=="" (
+        echo [ERROR] --node requires a version, for example: install.cmd --node lts
+        exit /b 1
+    )
+    set "NODE_TARGET=%~2"
+    shift
+    shift
+    goto :parse_args
+)
+if /i "%~1"=="--yes" (
+    set "YES=1"
+    shift
+    goto :parse_args
+)
+if /i "%~1"=="--no-activate" (
+    set "ACTIVATE=0"
+    shift
+    goto :parse_args
+)
+if /i "%~1"=="--help" goto :usage
+if /i "%~1"=="/?" goto :usage
+echo [ERROR] Unknown option: %~1
+goto :usage
+
+:args_done
+if not defined YES set "YES="
+
+call "%NVM_PATH%\lib\manifest.cmd" version >"%TEMP%\cmder-nvm-version.tmp" 2>nul
+set "CMDER_NVM_VERSION=unknown"
+if exist "%TEMP%\cmder-nvm-version.tmp" (
+    set /p CMDER_NVM_VERSION=<"%TEMP%\cmder-nvm-version.tmp"
+    del /q "%TEMP%\cmder-nvm-version.tmp" >nul 2>&1
+)
+if not defined CMDER_NVM_VERSION set "CMDER_NVM_VERSION=unknown"
+
+echo Bootstrap Installer (cmder-nvm v%CMDER_NVM_VERSION%)
 echo.
 
-REM --- Verify we are running on a 64-bit OS ---------------------------------
+REM ===========================================================================
+REM  1. Validate the platform
+REM ===========================================================================
 REM nvm-windows is a 64-bit binary; PROCESSOR_ARCHITEW6432 is only set when a
 REM 32-bit process runs on a 64-bit OS, so both variables must be checked.
 set "SYS_ARCH=32"
-if /i "%PROCESSOR_ARCHITECTURE%"=="AMD64" set "SYS_ARCH=64"
 if /i "%PROCESSOR_ARCHITEW6432%"=="AMD64" set "SYS_ARCH=64"
+if /i "%PROCESSOR_ARCHITECTURE%"=="AMD64" set "SYS_ARCH=64"
 if "%SYS_ARCH%"=="32" (
     echo [ERROR] cmder-nvm requires 64-bit Windows, nvm-windows is 64-bit only.
     exit /b 1
 )
-
-REM --- Make sure the nvm-windows binary is available -----------------------
-REM A normal checkout already ships bin\nvm.exe, so this returns immediately.
-REM It only reaches out to the network when the binary is genuinely missing.
-call :ensure_nvm
-if errorlevel 1 (
-    echo [ERROR] The nvm-windows binary is unavailable, cannot continue.
-    exit /b 1
-)
+echo [1/4] Platform      : Windows x64
 echo.
 
-REM --- Create the nvm home --------------------------------------------------
+REM ===========================================================================
+REM  2. Verify the nvm-windows binary
+REM ===========================================================================
+REM The distribution ships bin\nvm.exe. It is never downloaded: upstream no
+REM longer publishes the portable archive, and a binary fetched at install time
+REM would make the install non-reproducible anyway.
+call "%NVM_PATH%\lib\manifest.cmd" get "nvm-windows.version" >"%TEMP%\cmder-nvm-nvmver.tmp" 2>nul
+set "NVM_VERSION="
+if exist "%TEMP%\cmder-nvm-nvmver.tmp" set /p NVM_VERSION=<"%TEMP%\cmder-nvm-nvmver.tmp"
+del /q "%TEMP%\cmder-nvm-nvmver.tmp" >nul 2>&1
+
+echo [2/4] Verifying nvm-windows ...
+if not exist "%NVM_EXE%" goto :nvm_missing
+
+call "%NVM_PATH%\lib\manifest.cmd" verify "%NVM_EXE%" "nvm-windows.sha256"
+if errorlevel 1 goto :nvm_bad
+if not defined NVM_VERSION goto :nvm_no_version
+echo        version %NVM_VERSION%
+goto :step3
+
+:nvm_missing
+echo [FAIL] %NVM_EXE% is missing.
+echo.
+echo        This distribution is incomplete. Re-download the release zip;
+echo        nvm-windows is bundled and is not fetched at install time.
+echo.
+endlocal & exit /b 1
+
+:nvm_bad
+echo.
+echo [ERROR] bin\nvm.exe does not match manifest.json. Refusing to continue
+echo         with an unverified binary.
+endlocal & exit /b 1
+
+:nvm_no_version
+echo [WARN] Could not read the nvm-windows version from manifest.json.
+
+:step3
+echo.
+
+REM ===========================================================================
+REM  3. Create the nvm home and write settings.txt
+REM ===========================================================================
+echo [3/4] Preparing the nvm home ...
 if not exist "%NVM_HOME%" (
     mkdir "%NVM_HOME%"
     if not exist "%NVM_HOME%" (
-        echo [ERROR] Unable to create "%NVM_HOME%".
+        echo [FAIL] Unable to create "%NVM_HOME%".
         exit /b 1
     )
 )
 
-REM --- Write settings.txt ---------------------------------------------------
 REM One redirect per line instead of a parenthesised block: a block breaks when
 REM the path itself contains a parenthesis, which is common under Program Files.
->"%NVM_SETTINGS%"  echo root: %NVM_HOME%
+>"%NVM_SETTINGS%" echo root: %NVM_HOME%
 >>"%NVM_SETTINGS%" echo path: %NVM_SYMLINK%
 >>"%NVM_SETTINGS%" echo arch: %SYS_ARCH%
 >>"%NVM_SETTINGS%" echo proxy: none
 if not exist "%NVM_SETTINGS%" (
-    echo [ERROR] Unable to write "%NVM_SETTINGS%".
+    echo [FAIL] Unable to write "%NVM_SETTINGS%".
     exit /b 1
 )
-echo nvm home : %NVM_HOME%
-echo nvm link : %NVM_SYMLINK%
-echo nvm arch : %SYS_ARCH%
+
+echo        home %NVM_HOME%
+echo        link %NVM_SYMLINK%
 echo.
 
 REM ===========================================================================
-REM  Node.js version menu
+REM  4. Install a Node.js version
 REM ===========================================================================
-echo NodeJS: Select node version to install in 5 sec:
-echo ^- 1. NodeJS v16
-echo ^- 2. NodeJS v18 (LTS)
-echo ^- 3. NodeJS v19
-echo ^- 4. NodeJS v20 (LTS)
-echo ^- 5. NodeJS v21
-echo ^- 6. NodeJS latest LTS
-echo ^- 7. NodeJS latest
-echo ^- 0. Exit
-choice /T 5 /N /C:12345670 /D 7 /M "Option > "
+if not defined NODE_TARGET (
+    if defined YES (
+        echo [ERROR] --yes needs a version: install.cmd --node lts --yes
+        exit /b 1
+    )
+    call :menu
+    if not defined NODE_TARGET (
+        echo.
+        echo Nothing to do. Install a version later, using: install\node_js {VER}
+        exit /b 0
+    )
+)
 
-REM ERRORLEVEL is the 1-based position inside /C, so "0" is the 8th option.
-if "%ERRORLEVEL%"=="1" goto n16
-if "%ERRORLEVEL%"=="2" goto n18
-if "%ERRORLEVEL%"=="3" goto n19
-if "%ERRORLEVEL%"=="4" goto n20
-if "%ERRORLEVEL%"=="5" goto n21
-if "%ERRORLEVEL%"=="6" goto n_lts
-if "%ERRORLEVEL%"=="7" goto n_latest
-if "%ERRORLEVEL%"=="8" goto stop
-
-:n16
-call :install_version v16.20.2 "NodeJS v16"
-exit /b %ERRORLEVEL%
-
-:n18
-call :install_version v18.19.0 "NodeJS v18 (LTS)"
-exit /b %ERRORLEVEL%
-
-:n19
-call :install_version v19.9.0 "NodeJS v19"
-exit /b %ERRORLEVEL%
-
-:n20
-call :install_version v20.10.0 "NodeJS v20 (LTS)"
-exit /b %ERRORLEVEL%
-
-:n21
-call :install_version v21.5.0 "NodeJS v21"
-exit /b %ERRORLEVEL%
-
-:n_lts
-call :install_version lts "NodeJS latest LTS"
-exit /b %ERRORLEVEL%
-
-:n_latest
-call :install_version latest "NodeJS latest"
-exit /b %ERRORLEVEL%
-
-:stop
-echo Thank you for use
-echo NodeJS: You can install another version later, using: install\node_js {VER}
-exit /b 0
-
-REM ===========================================================================
-REM  :install_version <version> <label>
-REM
-REM  Installs the requested version and then switches to it. `call` is used
-REM  instead of `start` so the child runs in this console and the exit code of
-REM  the install is visible here.
-REM ===========================================================================
-:install_version
-echo NodeJS: Installing %~2. Please Wait...
-call "%NVM_PATH%\bin\install\node_js.cmd" %~1
+echo [4/4] Installing Node.js %NODE_TARGET% ...
+call "%NVM_PATH%\bin\install\node_js.cmd" %NODE_TARGET%
 if errorlevel 1 (
-    echo [ERROR] Installation of %~2 failed.
+    echo.
+    echo [ERROR] Installation of Node.js %NODE_TARGET% failed.
     exit /b 1
 )
-call "%NVM_PATH%\bin\use\node.cmd" %~1
-exit /b %ERRORLEVEL%
 
-REM ===========================================================================
-REM  :ensure_nvm
-REM
-REM  Verifies bin\nvm.exe exists and downloads it when it does not.
-REM
-REM  Distribution ships with bin\nvm.exe, so this is a no-op in the normal
-REM  case. It exists for partial checkouts and slimmed-down distributions
-REM  where the binary was excluded.
-REM
-REM  Download transports, in order:
-REM    1. curl      (bundled with Windows 10 1803+ and Cmder's MSYS2 tools)
-REM    2. PowerShell (Invoke-WebRequest, always present on Windows)
-REM    3. clear error with manual instructions
-REM
-REM  Override the source with NVM_WINDOWS_URL to point at a mirror or a
-REM  specific release, e.g.
-REM    set NVM_WINDOWS_URL=https://example.com/nvm-noinstall.zip
-REM ===========================================================================
-:ensure_nvm
-set "NVM_EXE=%NVM_PATH%\bin\nvm.exe"
-
-if exist "%NVM_EXE%" (
-    echo nvm     : %NVM_EXE%
+if "%ACTIVATE%"=="0" (
+    echo.
+    echo Installed. Activate it with: use\node %NODE_TARGET%
     exit /b 0
 )
 
-echo nvm     : not found, attempting download...
-
-REM Default to the portable archive. "noinstall" is used deliberately: the
-REM regular installer modifies PATH and registers a system-wide symlink,
-REM which requires admin rights this project deliberately avoids.
-if not defined NVM_WINDOWS_VERSION set "NVM_WINDOWS_VERSION=1.1.12"
-if not defined NVM_WINDOWS_URL set "NVM_WINDOWS_URL=https://github.com/coreybutler/nvm-windows/releases/download/v%NVM_WINDOWS_VERSION%/nvm-noinstall.zip"
-
-set "NVM_CACHE=%NVM_PATH%\.oobe-cache"
-set "NVM_ZIP=%NVM_CACHE%\nvm-noinstall.zip"
-set "NVM_TMP=%NVM_ZIP%.part"
-
-if not exist "%NVM_CACHE%" mkdir "%NVM_CACHE%" 2>nul
-
-REM Reuse a previously downloaded archive instead of fetching it again.
-if exist "%NVM_ZIP%" (
-    echo     reusing cached archive
-) else (
-    call :download_nvm
-    if errorlevel 1 (
-        echo [ERROR] Failed to download nvm-windows from:
-        echo           %NVM_WINDOWS_URL%
-        echo.
-        echo         Download it manually and place nvm.exe in:
-        echo           %NVM_PATH%\bin\nvm.exe
-        echo.
-        echo         Or point NVM_WINDOWS_URL at a working mirror, e.g.
-        echo           set NVM_WINDOWS_URL=https://example.com/nvm-noinstall.zip
-        exit /b 1
-    )
-)
-
-REM --- Unpack and install nvm.exe -------------------------------------------
-REM The archive contains nvm.exe at its root; only that file is needed.
-if not exist "%NVM_PATH%\bin" mkdir "%NVM_PATH%\bin" 2>nul
-if not exist "%NVM_PATH%\bin" (
-    echo [ERROR] Unable to create "%NVM_PATH%\bin".
-    exit /b 1
-)
-
-call :extract_nvm "%NVM_ZIP%" "%NVM_PATH%\bin"
+REM Activation is a separate step, delegated to bin\use\node.cmd, so the same
+REM code path is used whether a version is installed now or switched to later.
+call "%NVM_PATH%\bin\use\node.cmd" %NODE_TARGET%
 if errorlevel 1 (
-    echo [ERROR] Unable to unpack %NVM_ZIP%.
+    echo.
+    echo [ERROR] Node.js %NODE_TARGET% was installed but could not be activated.
+    echo         Run: use\node %NODE_TARGET%
     exit /b 1
 )
 
-if not exist "%NVM_EXE%" (
-    echo [ERROR] nvm.exe is missing after unpacking; the archive may be corrupt.
-    exit /b 1
-)
-
-REM A truncated download can leave a file that exists but will not run, so
-REM confirm the binary actually executes before relying on it.
-"%NVM_EXE%" version >nul 2>&1
-if errorlevel 1 (
-    echo [ERROR] The downloaded nvm.exe could not be executed.
-    exit /b 1
-)
-
-echo     installed %NVM_EXE%
+echo.
+echo Done. Node.js %NODE_TARGET% is active in this session.
 exit /b 0
 
-REM ---------------------------------------------------------------------------
-REM  :download_nvm
-REM
-REM  Fetches NVM_WINDOWS_URL to NVM_ZIP, trying each transport in turn.
-REM ---------------------------------------------------------------------------
-:download_nvm
-echo     downloading %NVM_WINDOWS_URL%
+REM ===========================================================================
+REM  :menu - ask which version to install
+REM ===========================================================================
+:menu
+echo NodeJS: Select node version to install in 5 sec:
+echo ^- 1. NodeJS v20
+echo ^- 2. NodeJS v22
+echo ^- 3. NodeJS v24
+echo ^- 4. NodeJS latest LTS
+echo ^- 5. NodeJS latest
+echo ^- 0. Exit
+choice /T 5 /N /C:123450 /D 4 /M "Option > "
 
-REM Transport 1: curl. -f fails on HTTP errors so a 404 page is never
-REM mistaken for a valid archive; -L follows redirects off GitHub.
-where curl >nul 2>&1
-if not errorlevel 1 (
-    curl -fL --retry 2 --connect-timeout 15 -o "%NVM_TMP%" "%NVM_WINDOWS_URL%" >nul 2>&1
-    if not errorlevel 1 if exist "%NVM_TMP%" (
-        move /y "%NVM_TMP%" "%NVM_ZIP%" >nul
-        exit /b 0
-    )
-)
+REM ERRORLEVEL is the 1-based position inside /C, so "0" is the 6th option.
+if "%ERRORLEVEL%"=="1" set "NODE_TARGET=20"
+if "%ERRORLEVEL%"=="2" set "NODE_TARGET=22"
+if "%ERRORLEVEL%"=="3" set "NODE_TARGET=24"
+if "%ERRORLEVEL%"=="4" set "NODE_TARGET=lts"
+if "%ERRORLEVEL%"=="5" set "NODE_TARGET=latest"
+if "%ERRORLEVEL%"=="6" set "NODE_TARGET="
+exit /b 0
 
-REM Transport 2: PowerShell. Invoke-WebRequest follows redirects by default
-REM and is present on every supported Windows version.
-if exist "%NVM_TMP%" del /q "%NVM_TMP%" >nul 2>&1
-where powershell >nul 2>&1
-if not errorlevel 1 (
-    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-        "try { $ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri $env:NVM_WINDOWS_URL -OutFile $env:NVM_TMP -UseBasicParsing; exit 0 } catch { exit 1 }" >nul 2>&1
-    if not errorlevel 1 if exist "%NVM_TMP%" (
-        move /y "%NVM_TMP%" "%NVM_ZIP%" >nul
-        exit /b 0
-    )
-)
-
-if exist "%NVM_TMP%" del /q "%NVM_TMP%" >nul 2>&1
-echo     [warn] no usable download transport (curl or PowerShell required)
-exit /b 1
-
-REM ---------------------------------------------------------------------------
-REM  :extract_nvm <zip> <target-dir>
-REM
-REM  Unpacks nvm.exe from the archive. Expand-Archive handles the zip; tar is
-REM  used as a fallback because Windows 10 1803+ ships bsdtar, which can read
-REM  zip archives. Only nvm.exe and nvmw.exe are copied out, so a stray
-REM  settings.txt in the archive cannot overwrite the one written by
-REM  install.cmd.
-REM ---------------------------------------------------------------------------
-:extract_nvm
-set "NVM_ZIP_FILE=%~1"
-set "NVM_TARGET=%~2"
-set "NVM_STAGE=%NVM_CACHE%\nvm-extract"
-
-if exist "%NVM_STAGE%" rd /s /q "%NVM_STAGE%" >nul 2>&1
-mkdir "%NVM_STAGE%" 2>nul
-
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "try { Expand-Archive -Path $env:NVM_ZIP_FILE -DestinationPath $env:NVM_STAGE -Force; exit 0 } catch { exit 1 }" >nul 2>&1
-if errorlevel 1 (
-    tar -xf "%NVM_ZIP_FILE%" -C "%NVM_STAGE%" >nul 2>&1
-    if errorlevel 1 (
-        rd /s /q "%NVM_STAGE%" >nul 2>&1
-        exit /b 1
-    )
-)
-
-copy /y "%NVM_STAGE%\nvm.exe" "%NVM_TARGET%\nvm.exe" >nul 2>&1
-copy /y "%NVM_STAGE%\nvmw.exe" "%NVM_TARGET%\nvmw.exe" >nul 2>&1
-
-REM Fall back to a recursive search if the archive nests its contents.
-REM This must run before the staging directory is removed.
-if not exist "%NVM_TARGET%\nvm.exe" (
-    for /f "usebackq delims=" %%f in (`dir /s /b "%NVM_STAGE%\nvm.exe" 2^>nul`) do (
-        copy /y "%%f" "%NVM_TARGET%\nvm.exe" >nul 2>&1
-    )
-    for /f "usebackq delims=" %%f in (`dir /s /b "%NVM_STAGE%\nvmw.exe" 2^>nul`) do (
-        copy /y "%%f" "%NVM_TARGET%\nvmw.exe" >nul 2>&1
-    )
-)
-
-rd /s /q "%NVM_STAGE%" >nul 2>&1
-
+:usage
+echo Usage:
+echo    install.cmd                        interactive version menu
+echo    install.cmd --node ^<version^>      e.g. --node 22, --node 22.14.0, --node lts
+echo    install.cmd --node lts --yes       non-interactive, for CI and provisioning
+echo    install.cmd --no-activate          install without switching to it
+echo.
+echo nvm-windows is bundled and verified against manifest.json; nothing is
+echo downloaded during the install.
+echo.
+echo After installing, switch versions with: use\node ^<version^>
 exit /b 0
