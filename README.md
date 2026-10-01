@@ -22,6 +22,42 @@ the right backend.
 | Linux | `./oobe.sh` | nvm-sh (downloaded into `.nvm/`) |
 | macOS | — | not supported; use the Windows installer or install [nvm-sh](https://github.com/nvm-sh/nvm) manually |
 
+### Windows: Missing nvm Binary
+
+A standard checkout ships `bin/nvm.exe`, and `install.cmd` uses it directly.
+If the binary is missing — a partial checkout, or a distribution where the
+~7 MB executable was excluded — `install.cmd` downloads it automatically
+before continuing, using the portable `nvm-noinstall` archive. That archive is
+used deliberately: the regular installer rewrites `PATH` and registers a
+system-wide symlink, which needs the admin rights this project avoids.
+
+The download is tried with, in order:
+
+1. **`curl`** (Windows 10 1803+, and Cmder's MSYS2 tools)
+2. **PowerShell** `Invoke-WebRequest` (present on every supported Windows)
+3. **Clear error** naming the URL, the target path, and how to override
+
+If all transports fail, the script tells you exactly where to place
+`nvm.exe`, and supports an override for mirrors:
+
+```bat
+set NVM_WINDOWS_URL=https://example.com/nvm-noinstall.zip
+install
+```
+
+A downloaded archive is cached in `.oobe-cache/`, so a retry does not
+re-download, and the resulting binary is executed once to confirm it is not a
+truncated file.
+
+> ⚠️ **Note:** the pinned default URL for `nvm-noinstall.zip` currently returns
+> **404**. The upstream project moved to the
+> [`nvm-windows/nvm`](https://github.com/nvm-windows/nvm) organisation and
+> removed the v1.x release assets. The bundled `nvm.exe` is v1.1.10, which
+> predates that change; v2.x is a redesign that keeps its configuration in the
+> Windows registry instead of `settings.txt` and is **not** a drop-in
+> replacement for this flow. Until v1.x assets are available again, set
+> `NVM_WINDOWS_URL` to a mirror or an archived copy if you need this path.
+
 ### Linux Setup
 
 ```sh
@@ -179,9 +215,10 @@ Switching is handled by nvm directly, so the same commands work everywhere:
 | `lib/oobe/detect.sh` | OS, architecture, distro and package manager detection |
 | `lib/oobe/download.sh` | Auto-download with the curl → wget → python → package manager fallback chain |
 | `lib/oobe/linux.sh` | Linux bootstrap: nvm-sh install, Node.js install, env file |
+| `bin/nvm.exe` | Bundled nvm-windows binary; re-downloaded by `install.cmd` if absent |
 | `bin/install/` | Windows install commands |
 | `bin/use/` | Windows version-switching commands |
-| `.nvm/`, `.oobe-cache/` | Generated on Linux; not tracked |
+| `.nvm/`, `.oobe-cache/` | Generated at install time; not tracked |
 | `config/user_profile.sh` | Generated on Linux; not tracked |
 
 ---
