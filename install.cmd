@@ -121,7 +121,7 @@ exit /b %ERRORLEVEL%
 
 :stop
 echo Thank you for use
-echo NodeJS: You can install, other version later, using install\node/version
+echo NodeJS: You can install another version later, using: install\node_js {VER}
 exit /b 0
 
 REM ===========================================================================

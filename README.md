@@ -154,14 +154,16 @@ First, you must run the core initialization command. After that, you can install
 | Command | Description |
 | :--- | :--- |
 | `install` | **Required for first run.** Initializes the installer. |
-| `install\node\16` | Install Node.js v16 |
-| `install\node\18` | Install Node.js v18 |
-| `install\node\19` | Install Node.js v19 |
-| `install\node\20` | Install Node.js v20 |
-| `install\node\21` | Install Node.js v21 |
-| `install\node\latest-lts` | Install the latest LTS release |
-| `install\node\latest` | Install the latest release |
-| `install\node_js {VER}` | Install a custom Node.js version (e.g., `install\node_js 22`) |
+| `install\node_js {VER}` | Install a Node.js version |
+
+`install\node_js` accepts a major line, a full version, or a keyword:
+
+| Command | Description |
+| :--- | :--- |
+| `install\node_js 18` | Install the latest v18 release |
+| `install\node_js 18.19.0` | Install that exact version |
+| `install\node_js lts` | Install the latest LTS release |
+| `install\node_js latest` | Install the latest release |
 
 #### Linux
 
@@ -216,8 +218,9 @@ Switching is handled by nvm directly, so the same commands work everywhere:
 | `lib/oobe/download.sh` | Auto-download with the curl → wget → python → package manager fallback chain |
 | `lib/oobe/linux.sh` | Linux bootstrap: nvm-sh install, Node.js install, env file |
 | `bin/nvm.exe` | Bundled nvm-windows binary; re-downloaded by `install.cmd` if absent |
-| `bin/install/` | Windows install commands |
-| `bin/use/` | Windows version-switching commands |
+| `bin/install/node_js.cmd` | Install any Node.js version on Windows |
+| `bin/use/node.cmd` | Switch the active Node.js version on Windows |
+| `bin/elevate.cmd`, `bin/elevate.vbs` | nvm-windows helper for admin-requiring operations |
 | `.nvm/`, `.oobe-cache/` | Generated at install time; not tracked |
 | `config/user_profile.sh` | Generated on Linux; not tracked |
 
