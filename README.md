@@ -144,12 +144,71 @@ already-downloaded archives are reused from `.oobe-cache/`.
 
 ---
 
+## 📦 One-File Distribution
+
+The project ships as a **single zip** instead of an unpacked Cmder tree.
+
+```
+cmder-nvm/
+├── SETUP.cmd          ← run this
+├── cmder-nvm.zip      ← the payload
+└── README.md
+```
+
+### `SETUP.cmd` — One-Click Bootstrap
+
+Double-click it, or run it from a command prompt. It:
+
+1. **Unpacks** `cmder-nvm.zip` into `.\cmder-nvm\`
+2. **Verifies** `bin\nvm.exe` is present (warning only — `install.cmd`
+   will attempt to download it if missing)
+3. **Wires the first-run install** by appending a conditional hook to
+   `config\user_profile.cmd`, so `install.cmd` runs automatically the first
+   time Cmder opens
+4. **Launches Cmder** in the unpacked folder, where the install then runs
+
+The startup hook is guarded by the presence of `nodejs\settings.txt`, which
+`install.cmd` creates on success:
+
+```bat
+@if not exist "%~dp0..\nodejs\settings.txt" call "%~dp0..\install.cmd"
+```
+
+So it fires **exactly once**. Once settings exist the line is a no-op and Cmder
+starts normally from then on. Re-running `SETUP.cmd` is safe — it will not
+re-unpack, will not add a second hook, and will not re-run the installer.
+
+> 📝 In a git checkout, where `Cmder.exe` already sits at the root, `SETUP.cmd`
+> uses it in place and skips extraction entirely. It does still append the hook
+> to `config\user_profile.cmd`, so that tracked file will show as modified —
+> the appended block is clearly marked and safe to delete.
+
+### `pack.cmd` — Building the Zip
+
+Run from a checkout to produce the release artifact:
+
+```bat
+pack.cmd
+```
+
+It stages `bin\`, `vendor\`, `config\`, `opt\`, `icons\`, `Cmder.exe`,
+`install.cmd` and `LICENSE` into a temporary folder, then compresses it to
+`cmder-nvm.zip` with the payload rooted at the top level. Development-only
+files (`.git`, caches, an already-installed `nodejs\`) are excluded.
+
+---
+
 ## 🛠️ Usage
 
 ### 1. Installation Steps
 First, you must run the core initialization command. After that, you can install specific Node.js versions.
 
 #### Windows (Cmder)
+
+**If you downloaded the zip**, just run `SETUP.cmd` — it unpacks everything and
+opens Cmder with the installer ready to go.
+
+If you already have an unpacked checkout, use these commands:
 
 | Command | Description |
 | :--- | :--- |
@@ -212,6 +271,8 @@ Switching is handled by nvm directly, so the same commands work everywhere:
 
 | Path | Purpose |
 | :--- | :--- |
+| `SETUP.cmd` | Unpacks the distribution, wires the first-run install, launches Cmder |
+| `pack.cmd` | Builds `cmder-nvm.zip` from a checkout |
 | `install.cmd` | Windows OOBE bootstrap (native flow) |
 | `oobe.sh` | Cross-platform entry point; dispatches to Windows or Linux |
 | `lib/oobe/detect.sh` | OS, architecture, distro and package manager detection |
