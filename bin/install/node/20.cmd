@@ -2,6 +2,6 @@
 @echo off
 set NODE_VER=v20.10.0
 
-nvm install %NODE_VER%
+call nvm install %NODE_VER%
 echo Install complete
 echo Change to this version, using: use\node %NODE_VER%
