@@ -1,47 +1,57 @@
-# cmder-nvm (Easy install nodejs without Admin)
+# cmder-nvm 🚀
+> Easy Node.js installation and version management within Cmder without Admin privileges.
 
-## Downloads :arrow_down:
-[Latest release](https://github.com/kbaraniak/cmder-nvm/releases/latest)
+![[GitHub Release](https://img.shields.io/github/v/release/kbaraniak/cmder-nvm)](https://github.com/kbaraniak/cmder-nvm/releases/latest)
 
-## Usage :mag_right:
-### Step Install
+---
 
-`install` - Install Node.js version (**required for first run**)
+## ⬇️ Downloads
+Get the latest version here: [Latest release](https://github.com/kbaraniak/cmder-nvm/releases/latest)
 
-`install\node\16` - Install Node.js v16, after used `install`
+---
 
-`install\node\18` - Install Node.js v18, after used `install`
+## 🛠️ Usage
 
-`install\node\19` - Install Node.js v19, after used `install`
+### 1. Installation Steps
+First, you must run the core initialization command. After that, you can install specific Node.js versions.
 
-`install\node\20` - Install Node.js v20, after used `install`
+| Command | Description |
+| :--- | :--- |
+| `install` | **Required for first run.** Initializes the installer. |
+| `install\node\16` | Install Node.js v16 |
+| `install\node\18` | Install Node.js v18 |
+| `install\node\19` | Install Node.js v19 |
+| `install\node\20` | Install Node.js v20 |
+| `install\node\21` | Install Node.js v21 |
+| `install\node_js {VER}` | Install a custom Node.js version (e.g., `install\node_js 22`) |
 
-`install\node\21` - Install Node.js v21, after used `install`
+### 2. Switching Versions
+Once a version is installed, use these commands to enable and switch between them.
 
-`install\node_js {VER}` - Install Custom Node.js Version, after used `install`
+| Command | Description |
+| :--- | :--- |
+| `use\node_16` | Enable Node.js v16 |
+| `use\node_18` | Enable Node.js v18 |
+| `use\node_19` | Enable Node.js v19 |
+| `use\node_20` | Enable Node.js v20 |
+| `use\node_21` | Enable Node.js v21 |
+| `use\node_js {VER}` | Enable a custom Node.js version (e.g., `use\node_js 22`) |
 
+---
 
-### Step Usage
-`use\node_16` - Enable Node.js v16, after installed this node version
+## 📄 License & Credits
 
-`use\node_18` - Enable Node.js v18, after installed this node version
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
-`use\node_19` - Enable Node.js v19, after installed this node version
+### Acknowledgments
+This project is built upon and inspired by these amazing tools:
+* **nvm** - [nvm-sh/nvm](https://github.com/nvm-sh/nvm/) (MIT)
+* **nvm-windows** - [coreybutler/nvm-windows](https://github.com/coreybutler/nvm-windows) (MIT)
+* **cmder** - [cmderdev/cmder](https://github.com/cmderdev/cmder) (MIT)
 
-`use\node_20` - Enable Node.js v20, after installed this node version
+> 💡 *Please note: This repository contains projects created as part of university classes and may contain errors.*
 
-`use\node_21` - Enable Node.js v21, after installed this node version
+---
 
-`use\node_js {VER}` - Enable Custom Node.js Version, after installed this  version
-
-
-## Licenses :page_with_curl:
-Project based on:
-- nvm [nvm-sh/nvm](https://github.com/nvm-sh/nvm/) [License: MIT]
-- nvm-windows [coreybutler/nvm-windows](https://github.com/coreybutler/nvm-windows) [License: MIT]
-- cmder [cmderdev/cmder](https://github.com/cmderdev/cmder) [License: MIT]
-
-**Thank you for usage my project**
-Pull Requests are welcome
-
-Created with :hearts: for coding
+**Thank you for using my project!** ❤️  
+Pull Requests are always welcome. Made with love for coding.
