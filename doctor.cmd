@@ -55,10 +55,14 @@ REM ---------------------------------------------------------------------------
 echo   Binaries
 if exist "%NVM_PATH%\Cmder.exe" (
     call :ok "Cmder.exe present"
-    call :verify_binary "%NVM_PATH%\Cmder.exe" "cmder.sha256"
 ) else (
-    call :fail "Cmder.exe missing"
+    call :fail "Cmder.exe is not unpacked"
+    echo          Run SETUP.cmd. Cmder ships as an archive and is unpacked there.
 )
+if exist "%NVM_PATH%\lib\cmder-*.zip" goto :cmder_archive_present
+call :warn "no Cmder archive in lib\; the distribution cannot be rebuilt"
+
+:cmder_archive_present
 if exist "%NVM_EXE%" (
     call :ok "bin\nvm.exe present"
     call :verify_binary "%NVM_EXE%" "nvm-windows.sha256"
@@ -164,13 +168,18 @@ if exist "%NVM_PATH%\manifest.json" (
     call :fail "manifest.json missing"
 )
 
+REM The hook is a tracked file in src\ that SETUP.cmd copies into the generated
+REM config\profile.d\. A missing hook means setup never completed, or someone
+REM deleted it. An old hook left in user_profile.cmd means the install predates
+REM the profile.d approach: harmless, but it should be removed by hand.
 if not exist "%NVM_PATH%\config\profile.d\cmder-nvm.cmd" (
-    call :fail "the first-run hook config\profile.d\cmder-nvm.cmd is missing"
-    echo          Run SETUP.cmd.
+    call :warn "config\profile.d\cmder-nvm.cmd is missing; the first-run hook is not installed"
+    echo          Run SETUP.cmd to install it.
+    set /a WARNINGS+=1
+) else (
+    call :ok "first-run hook installed"
 )
 
-REM An old hook left in user_profile.cmd means the install predates the
-REM profile.d approach. It is harmless, but it should be removed by hand.
 findstr /c:"cmder-nvm: run install.cmd" "%NVM_PATH%\config\user_profile.cmd" >nul 2>&1
 if not errorlevel 1 (
     call :warn "config\user_profile.cmd still carries an old cmder-nvm hook"

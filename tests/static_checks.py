@@ -4,9 +4,9 @@ Static checks for the cmder-nvm Windows scripts.
 
 These run on any platform with Python 3, including CI and Linux containers
 where cmd.exe is not available. They cannot replace tests/run.cmd, which
-executes the real flow, but they catch the class of mistake that is
-expensive to find on Windows: a label that no longer exists, a manifest that
-no longer matches the binaries, a bracket that unbalances a block.
+executes the real flow, but they catch the class of mistake that is expensive
+to find on Windows: a stale reference, a label that no longer exists, a
+manifest that no longer matches the binaries.
 
     python3 tests/static_checks.py [repo-root]
 """
@@ -14,6 +14,7 @@ import hashlib
 import json
 import re
 import sys
+import zipfile
 from pathlib import Path
 
 FAILURES = []
@@ -58,10 +59,10 @@ def check_manifest(root):
         FAILURES.append(f"manifest.json is not valid JSON: {error}")
         return
 
-    # schema is a JSON number on purpose; every other value is a string.
     for key, value in manifest.items():
         if key.startswith("_"):
             continue
+        # schema is a JSON number on purpose; every other value is a string.
         if key == "schema":
             check(
                 isinstance(value, int) and value >= 1,
@@ -77,6 +78,8 @@ def check_manifest(root):
             f'manifest value for {key!r} contains \'": "\', which breaks parsing',
         )
 
+    # Every dotted key must be matched literally by the parser, so no key may be
+    # a substring of another key.
     keys = [
         k
         for k, v in manifest.items()
@@ -90,7 +93,9 @@ def check_manifest(root):
 
     # lib/manifest.cmd matches a key with the literal pattern *"KEY": ", so two
     # keys only collide if one full pattern appears inside the other's line.
-    # Simulating that is more precise than a plain substring test.
+    # Simulating that is more precise than a plain substring test, which would
+    # flag "cmder.archive" against "cmder.archive.sha256" even though the parser
+    # never confuses the two.
     text = manifest_file.read_text()
     for key in keys:
         for other in keys:
@@ -106,9 +111,11 @@ def check_manifest(root):
                     )
                     break
 
-    # The pinned digests must match the artifacts as they are on disk.
+    # The pinned digests must match the artifacts as they are on disk. Cmder is
+    # not on disk any more: it ships inside lib/cmder-<version>.zip, so its
+    # digest is verified by reading the member out of the archive. That check is
+    # what proves SETUP.cmd's post-extraction verification will pass.
     for digest_key, file_key in (
-        ("cmder.sha256", "cmder.file"),
         ("nvm-windows.sha256", "nvm-windows.file"),
     ):
         if digest_key not in manifest or file_key not in manifest:
@@ -122,6 +129,61 @@ def check_manifest(root):
             f"{manifest[file_key]} digest is stale: manifest says "
             f"{manifest[digest_key]}, file is {actual}",
         )
+
+    archive_key = "cmder.archive"
+    if archive_key in manifest:
+        archive = root / manifest[archive_key]
+        if check(archive.is_file(), f"manifest points at a missing archive: {manifest[archive_key]}"):
+            if "cmder.archive.sha256" in manifest:
+                actual = sha256(archive)
+                check(
+                    actual == manifest["cmder.archive.sha256"],
+                    f"{manifest[archive_key]} digest is stale: manifest says "
+                    f"{manifest['cmder.archive.sha256']}, file is {actual}",
+                )
+
+            member = manifest.get("cmder.file", "Cmder.exe")
+            digest = hashlib.sha256()
+            found = False
+            with zipfile.ZipFile(archive) as bundle:
+                for info in bundle.infolist():
+                    if info.filename == member:
+                        digest.update(bundle.read(info))
+                        found = True
+                        break
+            check(found, f"{member} is not inside {manifest[archive_key]}")
+            if found and "cmder.sha256" in manifest:
+                actual = digest.hexdigest()
+                check(
+                    actual == manifest["cmder.sha256"],
+                    f"{member} inside the archive has a stale digest: manifest says "
+                    f"{manifest['cmder.sha256']}, archive holds {actual}",
+                )
+
+
+def check_cmder_is_not_vendored(root):
+    """
+    Cmder must arrive as a verified archive, not as a tree in the source repo.
+
+    A vendored Cmder makes updating it a diff over hundreds of files and puts an
+    unverifiable binary in version control, which is exactly what the manifest
+    exists to prevent.
+    """
+    for name in ("Cmder.exe", "vendor", "config", "opt", "icons"):
+        check(
+            not (root / name).exists() or (root / name).is_file() and name == "VERSION",
+            f"{name} exists in the source tree; Cmder must ship only as lib/cmder-*.zip",
+        )
+
+    archives = sorted((root / "lib").glob("cmder-*.zip"))
+    check(bool(archives), "no Cmder archive in lib/")
+
+    hook = root / "src" / "profile.d" / "cmder-nvm.cmd"
+    check(
+        hook.is_file(),
+        "src/profile.d/cmder-nvm.cmd is missing; the hook must be tracked in src/, "
+        "because config/ is generated by SETUP.cmd",
+    )
 
 
 def iter_batch_files(root):
@@ -197,6 +259,8 @@ def check_parentheses(root):
         depth = 0
         for number, raw in enumerate(text.splitlines(), start=1):
             line = strip_batch_idioms(strip_comments(raw))
+            if line.lstrip().lower().startswith("rem"):
+                continue
             depth += line.count("(") - line.count(")")
             check(
                 depth >= 0,
@@ -223,6 +287,7 @@ def main():
 
     check_version(root)
     check_manifest(root)
+    check_cmder_is_not_vendored(root)
     check_labels(root)
     check_parentheses(root)
     check_line_endings(root)
