@@ -11,6 +11,8 @@
 #  Usage:
 #    ./oobe.sh                 interactive version menu
 #    ./oobe.sh 20              install a specific version non-interactively
+#    ./oobe.sh --node lts      name the version explicitly
+#    ./oobe.sh --node lts --yes  no prompting, for CI and provisioning
 #    ./oobe.sh --check         run the checks and the install, then stop
 #    CMDER_NVM_VERSION=20 ./oobe.sh
 # ============================================================================
@@ -38,14 +40,17 @@ Options:
     -c, --check     verify dependencies and exit without installing Node.js
     -q, --quiet     suppress progress output
     -n, --no-menu   never prompt; requires a version argument
+    -y, --yes       non-interactive; requires --node
 
 Arguments:
     version         Node.js version to install, e.g. 20, 18.20.4, lts, latest
 
 Examples:
-    ./oobe.sh              install a version chosen from the menu
-    ./oobe.sh 20           install Node.js 20
-    ./oobe.sh --check      only verify the system
+    ./oobe.sh                  install a version chosen from the menu
+    ./oobe.sh 20               install Node.js 20
+    ./oobe.sh --node lts       install the latest LTS, named explicitly
+    ./oobe.sh --node lts --yes install the latest LTS without prompting
+    ./oobe.sh --check          only verify the system
 EOF
 }
 
@@ -134,13 +139,21 @@ main() {
             -c|--check)   _mode="check-only"; shift ;;
             -q|--quiet)   CMDER_NVM_QUIET=1; export CMDER_NVM_QUIET; shift ;;
             -n|--no-menu) _no_menu=1; shift ;;
+            -y|--yes)     _no_menu=1; shift ;;
+            --node)       shift
+                         if [ $# -eq 0 ]; then
+                             oobe_error "--node requires a version"
+                             return 2
+                         fi
+                         _version="$1"; _no_menu=1; shift ;;
+            --node=*)     _version="${1#--node=}"; _no_menu=1; shift ;;
             -*)           oobe_error "unknown option: $1"; usage; return 2 ;;
             *)            _version=$1; shift ;;
         esac
     done
 
     if [ "$_no_menu" = "1" ] && [ -z "$_version" ] && [ -z "${CMDER_NVM_VERSION:-}" ]; then
-        oobe_error "--no-menu requires a version argument"
+        oobe_error "--no-menu/--yes/--node require a version, e.g. --node lts"
         return 2
     fi
 
